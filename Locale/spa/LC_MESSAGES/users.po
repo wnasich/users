@@ -12,17 +12,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Users CakePHP plugin\n"
 "POT-Creation-Date: 2010-09-15 15:48+0200\n"
-"PO-Revision-Date: 2010-09-24 16:38-0400\n"
-"Last-Translator: José Lorenzo Rodríguez <jose.lorenzo@cakedc.com>\n"
+"PO-Revision-Date: 2013-08-11 18:12-0300\n"
+"Last-Translator: Walter Nasich <wnasich@gmail.com>\n"
 "Language-Team: CakeDC <contact@cakedc.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=2; plural=(1 != n);\n"
 
 #: /controllers/details_controller.php:57;138
 msgid "Invalid Detail."
-msgstr "Detalle no váido"
+msgstr "Detalle no válido"
 
 #: /controllers/details_controller.php:78
 msgid "Saved"
@@ -661,7 +661,7 @@ msgstr "Por favor escoja un nombre de usuario"
 
 #: /views/users/register.ctp:15
 msgid "E-mail (used as login)"
-msgstr "Correo (usuado para ingresar)"
+msgstr "E-mail (usado para ingresar)"
 
 #: /views/users/register.ctp:16
 msgid "Must be a valid email address"
