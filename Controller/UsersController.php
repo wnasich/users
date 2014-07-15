@@ -1,11 +1,11 @@
 <?php
 /**
- * Copyright 2010 - 2013, Cake Development Corporation (http://cakedc.com)
+ * Copyright 2010 - 2014, Cake Development Corporation (http://cakedc.com)
  *
  * Licensed under The MIT License
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright Copyright 2010 - 2013, Cake Development Corporation (http://cakedc.com)
+ * @copyright Copyright 2010 - 2014, Cake Development Corporation (http://cakedc.com)
  * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
@@ -64,7 +64,7 @@ class UsersController extends UsersAppController {
 		'Session',
 		'Cookie',
 		'Paginator',
-		'Search.Prg',
+		'Security',
 		'Users.RememberMe',
 	);
 
@@ -120,7 +120,9 @@ class UsersController extends UsersAppController {
 /**
  * Wrapper for CakePlugin::loaded()
  *
+ * @throws MissingPluginException
  * @param string $plugin
+ * @param boolean $exceiption
  * @return boolean
  */
 	protected function _pluginLoaded($plugin, $exception = true) {
@@ -265,9 +267,10 @@ class UsersController extends UsersAppController {
 	}
 
 /**
- * Edit
+ * Edit the current logged in user
  *
- * @param string $id User ID
+ * Extend the plugin and implement your custom logic here
+ *
  * @return void
  */
 	public function edit() {
@@ -280,10 +283,12 @@ class UsersController extends UsersAppController {
  * @return void
  */
 	public function admin_index() {
-		$this->Prg->commonProcess();
-		unset($this->{$this->modelClass}->validate['username']);
-		unset($this->{$this->modelClass}->validate['email']);
-		$this->{$this->modelClass}->data[$this->modelClass] = $this->passedArgs;
+		if ($this->{$this->modelClass}->Behaviors->loaded('Searchable')) {
+			$this->Prg->commonProcess();
+			unset($this->{$this->modelClass}->validate['username']);
+			unset($this->{$this->modelClass}->validate['email']);
+			$this->{$this->modelClass}->data[$this->modelClass] = $this->passedArgs;
+		}
 
 		if ($this->{$this->modelClass}->Behaviors->loaded('Searchable')) {
 			$parsedConditions = $this->{$this->modelClass}->parseCriteria($this->passedArgs);
@@ -344,6 +349,7 @@ class UsersController extends UsersAppController {
 				$this->Session->setFlash(__d('users', 'User saved'));
 				$this->redirect(array('action' => 'index'));
 			} else {
+				unset($result[$this->modelClass]['password']);
 				$this->request->data = $result;
 			}
 		} catch (OutOfBoundsException $e) {
@@ -353,6 +359,7 @@ class UsersController extends UsersAppController {
 
 		if (empty($this->request->data)) {
 			$this->request->data = $this->{$this->modelClass}->read(null, $userId);
+			unset($this->request->data[$this->modelClass]['password']);
 		}
 		$this->set('roles', Configure::read('Users.roles'));
 	}
@@ -525,9 +532,12 @@ class UsersController extends UsersAppController {
 			'by' => $by,
 			'search' => $searchTerm,
 			'conditions' => array(
-					'AND' => array(
-						$this->modelClass . '.active' => 1,
-						$this->modelClass . '.email_verified' => 1)));
+				'AND' => array(
+					$this->modelClass . '.active' => 1,
+					$this->modelClass . '.email_verified' => 1
+				)
+			)
+		);
 
 		$this->set('users', $this->Paginator->paginate($this->modelClass));
 		$this->set('searchTerm', $searchTerm);
@@ -541,9 +551,6 @@ class UsersController extends UsersAppController {
 	public function logout() {
 		$user = $this->Auth->user();
 		$this->Session->destroy();
-		if (isset($_COOKIE[$this->Cookie->name])) {
-		$this->Cookie->destroy();
-		}
 		$this->RememberMe->destroyCookie();
 		$this->Session->setFlash(sprintf(__d('users', '%s you have successfully logged out'), $user[$this->{$this->modelClass}->displayField]));
 		$this->redirect($this->Auth->logout());
@@ -812,9 +819,10 @@ class UsersController extends UsersAppController {
 		if (empty($user)) {
 			$this->Session->setFlash(__d('users', 'Invalid password reset token, try again.'));
 			$this->redirect(array('action' => 'reset_password'));
+			return;
 		}
 
-		if (!empty($this->request->data) && $this->{$this->modelClass}->resetPassword(Set::merge($user, $this->request->data))) {
+		if (!empty($this->request->data) && $this->{$this->modelClass}->resetPassword(Hash::merge($user, $this->request->data))) {
 			if ($this->RememberMe->cookieIsSet()) {
 				$this->Session->setFlash(__d('users', 'Password changed.'));
 				$this->_setCookie();
